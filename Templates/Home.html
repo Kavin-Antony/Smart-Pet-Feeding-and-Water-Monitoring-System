@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pet Feeder</title>
+  <style>
+    body {
+  font-family: Arial, sans-serif;
+  padding: 40px;
+  max-width: 600px;
+  margin: auto;
+  background-color: #f9f9f9;
+}
+
+h1 {
+  text-align: center;
+}
+
+form {
+  margin-bottom: 30px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+}
+
+input[type="number"] {
+  padding: 8px;
+  font-size: 16px;
+  width: 100px;
+}
+
+button {
+  padding: 8px 20px;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.logs {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(0,0,0,0.1);
+}
+
+.log-entry {
+  margin-bottom: 10px;
+  padding: 10px;
+  border-left: 4px solid #007bff;
+  background-color: #eef5ff;
+}
+  </style>
+</head>
+<body>
+  <h1>Pet Feeder</h1>
+
+  <form id="feedForm">
+    <input type="number" id="amount" placeholder="Grams" required min="1">
+    <button type="submit">Feed Now</button>
+  </form>
+
+  <div class="logs">
+    <h2>Feeding Logs</h2>
+    <div id="logList">Loading...</div>
+  </div>
+
+  <script>
+  const API_BASE = 'http://127.0.0.1:8000'; 
+
+  async function loadLogs() {
+    try {
+      const res = await fetch(`${API_BASE}/feeding-history`);
+      const logs = await res.json();
+      document.getElementById('logList').innerHTML = logs.map(log => `
+        <div class="log-entry">
+          <strong>${log.amount}g</strong> fed at <em>${log.timestamp}</em>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error("Failed to load logs:", err);
+      document.getElementById('logList').innerText = "Error loading logs.";
+    }
+  }
+
+  document.getElementById('feedForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const amount = parseInt(document.getElementById('amount').value, 10);
+    if (!amount) return;
+
+    try {
+      const res = await fetch(`${API_BASE}/feed`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'ngrok-skip-browser-warning': 'true'
+        },
+        body: JSON.stringify(amount)
+      });
+
+      const result = await res.json();
+      alert(result.message);
+      document.getElementById('amount').value = '';
+      loadLogs();
+    } catch (err) {
+      alert("Failed to feed. Please try again.");
+      console.error(err);
+    }
+  });
+
+  // Initial load
+  loadLogs();
+  </script>
+</body>
+</html>
